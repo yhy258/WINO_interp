@@ -1,0 +1,64 @@
+model_params:
+  cleo: False
+  cond: False
+  in_channels: 1
+  out_channels: 2
+  dim: 64
+  padding: 8
+  num_blocks: 12
+  inner_expand: [0]
+  expand_list: [2]
+  hidden_list: [256]
+  mode_list: [50, 60]
+  act_func: GELU
+  hid_num_blocks: [4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]
+  sparsity_threshold: 0
+  fourier_bias: False
+  
+  stem_dropout: 0
+  feature_dropout: 0
+  head_dropout: 0
+
+  drop_path_rate: 0.0
+  wave_prior: True
+  wp_mult: True # Our conditioning method
+  wp_inputcat : False
+  in_ch_sf: True # Channel Shuffling
+  weight_sharing: True # Weight Sharing
+
+  positional_encoding: True
+  eps_info: False
+
+train_params:
+  optimizer_name: adamw
+  optimizer_lr: 0.002
+  optimizer_weight_decay: 0.0001
+  criterion_name: nmse
+  scheduler_name: cosine
+  scheduler_lr_gamma: 0.99
+  scheduler_lr_min: 0.00001
+
+  # simulation / dataset setting.
+  step: 20
+  resolution: 40
+  width: 0.12
+  batch_size: 32
+  normalize: False
+
+
+run:
+  device: [0]
+  deterministic: True
+  random_state: 42
+  n_epochs: 200
+  num_workers: 4
+  pin_memory: True
+
+
+saver:
+  save_root: "checkpoints/wino/nmse_waveprior_64dim_12layer_256_5060_auggroup4_weightsharing"
+dataset:
+  dataset_root: "dataset/data/120nmdata"
+  test_dataset_root: "dataset/data/120nmdata/ceviche_test"
+  dataset_folder_name: "rand_wvl_pt"
+  mode: "train"

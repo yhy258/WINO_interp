@@ -1,0 +1,56 @@
+model_params:
+  cond: False
+  in_channels: 1
+  out_channels: 2
+  dim: 16
+  blk_num: 2
+  act_func: GELU
+  norm: True
+  fourier_block: False
+  mode1: 0
+  mode2: 0
+  has_attn: False
+  mode_scaling: False
+  use_1x1: False
+  wave_prior : True
+  dropout: 0.0
+  cond_bias: False
+  scale_shift_norm: False
+  blueprint: False
+  propagate_resonance_prior: False
+  neural_code: False
+  cond_path_flag: False
+
+train_params:
+  optimizer_name: adamw
+  optimizer_lr: 0.002
+  optimizer_weight_decay: 0.0001
+  criterion_name: nmse
+  scheduler_name: cosine
+  scheduler_lr_gamma: 0.99
+  scheduler_lr_min: 0.00001
+
+  # simulation / dataset setting.
+  step: 20
+  resolution: 40
+  width: 0.12
+  batch_size: 32
+  normalize: False
+
+
+run:
+  device: [0]
+  deterministic: True
+  random_state: 42
+  n_epochs: 200
+  num_workers: 4
+  pin_memory: True
+
+
+saver:
+  save_root: "checkpoints/unet/nmse_waveprior_16dim"
+dataset:
+  dataset_root: "dataset/data/120nmdata"
+  test_dataset_root: "dataset/data/120nmdata/ceviche_test"
+  dataset_folder_name: "rand_wvl_pt"
+  mode: "train"
