@@ -1,4 +1,4 @@
-<div align="center">
+![image](https://github.com/user-attachments/assets/67e01b2a-5ab9-4090-b8cb-fabc0485e4ae)<div align="center">
 <h1> Wave Interpolation Neural Operator: Interpolated Prediction of Electric Fields Across Untrained Wavelengths </h1>
 
 <hr />
@@ -46,7 +46,7 @@ Other libraries listed in requirements.txt
 
 
 ## Data preparation
-WINO dataset used in the experiments can be accessed on [Google Drive](https://drive.google.com/drive/folders/1XtZV9mEScLZlqLjuU-Udur4bktvj9ZNC?usp=sharing).
+WINO dataset used in the experiments can be accessed on [Google Drive](https://drive.google.com/file/d/1Zx8Uu6mPba6uMvwkG0farp-AJ1j93gtt/view?usp=share_link).
 
 The dataset should be placed in the directory defined in the configure file (check the configs directory).
 
