@@ -1,4 +1,4 @@
-![image](https://github.com/user-attachments/assets/67e01b2a-5ab9-4090-b8cb-fabc0485e4ae)<div align="center">
+
 <h1> Wave Interpolation Neural Operator: Interpolated Prediction of Electric Fields Across Untrained Wavelengths </h1>
 
 <hr />
