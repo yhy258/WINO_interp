@@ -1,9 +1,9 @@
 
-<h1> Wave Interpolation Neural Operator: Interpolated Prediction of Electric Fields Across Untrained Wavelengths </h1>
+<h1> Wave Interpolation Neural Operator: Parameter-Efficient Electromagnetic Surrogate Solver for Broadband Field Prediction using Discrete Wavelength Data </h1>
 
 <hr />
 
-> **Abstract:** *We propose Wave Interpolation Neural Operator (WINO), a novel surrogate solver enabling simulation condition interpolation across a continuous spectrum of broadband wavelengths. WINO introduces the Fourier Group Convolution Shuffling operator and a new conditioning method to efficiently predict electric fields from both trained and untrained wavelength data, achieving significant improvements in parameter efficiency and spectral interpolation performance. Compared to the state-of-the-art model, we achieve a 74% reduction in parameters and 80.5% improvements in prediction accuracy for untrained wavelengths, and 13.2% improvements for trained wavelengths.* 
+> **Abstract:** *Designing photonic structures requires electromagnetic simulations, which often require high computational costs. Researchers have developed surrogate solvers to predict electric fields and alleviate the computational challenges. However, existing surrogate solvers are limited to performing inference at fixed simulation conditions and require retraining for different conditions. To address this, we propose a Wave-Informed element-wise Multiplicative Encoding (WIME) and a Fourier Group Convolutional Shuffling (FGCS) operator that enables the prediction of broadband wavelengths observed during training and unobserved intermediate wavelengths between those seen during training. Compared to the state-of-the-art model, we achieve a 74% reduction in parameters, 80.5% improvements in prediction accuracy for untrained wavelengths, and 13.2% improvements for trained wavelengths..* 
 <hr />
 </div>
 
