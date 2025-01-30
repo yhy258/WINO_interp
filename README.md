@@ -9,9 +9,6 @@
 
 ## Introduction
 
-
-<img src="figures/Fig1.png" width="500"/>
-
 Conventional neural network based surrogate solvers typically perform well within the fixed simulation settings in which they are trained.
 Generating a new dataset and retraining the model to predict outcomes for new simulation parameters
 are necessary.
