@@ -1,6 +1,6 @@
 # Simulation Setup
 
-<img src="figures/sim_setting.png" width="500"/>
+<img src="figures/simulation_setting.png" width="500"/>
 
 FDFD simulation setup overview. (left) The entire simulation space includes the metalens structure. The blue region represents the design region of the lens, red line represents the visible light source, and the gray region represents the PML used to minimize reflections. (right) The design region of the metalens, shown as the blue area in (left).
 
