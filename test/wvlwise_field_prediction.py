@@ -45,6 +45,15 @@ def get_design_range(resolution, width=0.275):
     design_range = (subtrate_range[1],subtrate_range[1] + int(width/1e6/dl))
     return design_range
 
+def get_near_field(data, design_range, wavelength):
+    # data : B, C, H, W
+    start = design_range[1]
+    mid_wavelength = wavelength
+    unit_micro = 40 # resolution
+    distance = int(unit_micro * mid_wavelength)
+    param_output = data[:, :, start: start + distance, :] 
+    return param_output
+
 def get_dataset(path):
     wvlslab  = list(range(400, 701))
     data_dict = dict()
@@ -109,7 +118,12 @@ def wvlwise_test(opt, model, dataset, device, file_name):
     structure_mse_dict = dict()
     structure_nmae_dict = dict()
     structure_nmse_dict = dict()
+    near_mae_dict = dict()
+    near_mse_dict = dict()
+    near_nmae_dict = dict()
+    near_nmse_dict = dict()
     fields_dict = dict()
+    
     
     d_range = get_design_range(opt.resolution, opt.width)
     
@@ -134,6 +148,23 @@ def wvlwise_test(opt, model, dataset, device, file_name):
             param_output = output[:, :, d_range[0]:d_range[1], :]
             param_target = target[:, :, d_range[0]:d_range[1], :]
             
+            
+            #### use for-loop
+            near_outputs = []
+            near_targets = []
+            for i in range(len(output)):
+                near_output = get_near_field(output[i:i+1], d_range, wavelength[i, 0].item())
+                near_target = get_near_field(target[i:i+1], d_range, wavelength[i, 0].item())
+                near_outputs.append(near_output)
+                near_targets.append(near_target)
+            def get_element_error(criterion, outputs, targets):
+                losses = []
+                for output, target in zip(outputs, targets):
+                    losses.append(criterion(output, target))
+                return torch.mean(torch.stack(losses))
+                    
+            
+            
             mae_val_loss = mae_criterion(output, target)
             mse_val_loss = mse_criterion(output, target)
             nmae_val_loss = nmae_criterion(output, target)
@@ -143,6 +174,11 @@ def wvlwise_test(opt, model, dataset, device, file_name):
             structure_nmae_val_loss = nmae_criterion(param_output, param_target)
             structure_nmse_val_loss = nmse_criterion(param_output, param_target)
             
+            near_mae_val_loss = get_element_error(mae_criterion, near_outputs, near_targets)
+            near_mse_val_loss = get_element_error(mse_criterion, near_outputs, near_targets)
+            near_nmae_val_loss = get_element_error(nmae_criterion, near_outputs, near_targets)
+            near_nmse_val_loss = get_element_error(nmse_criterion, near_outputs, near_targets)
+            
             mae_dict[str(wvl_num)] = mae_val_loss.detach().clone().cpu()
             mse_dict[str(wvl_num)] = mse_val_loss.detach().clone().cpu()
             nmae_dict[str(wvl_num)] = nmae_val_loss.detach().clone().cpu()
@@ -151,6 +187,10 @@ def wvlwise_test(opt, model, dataset, device, file_name):
             structure_mse_dict[str(wvl_num)] = structure_mse_val_loss.detach().clone().cpu()
             structure_nmae_dict[str(wvl_num)] = structure_nmae_val_loss.detach().clone().cpu()
             structure_nmse_dict[str(wvl_num)] = structure_nmse_val_loss.detach().clone().cpu()
+            near_mae_dict[str(wvl_num)] = near_mae_val_loss.detach().clone().cpu()
+            near_mse_dict[str(wvl_num)] = near_mse_val_loss.detach().clone().cpu()
+            near_nmae_dict[str(wvl_num)] = near_nmae_val_loss.detach().clone().cpu()
+            near_nmse_dict[str(wvl_num)] = near_nmse_val_loss.detach().clone().cpu()
             
             fields_dict[str(wvl_num)] = (output.detach().clone().cpu(), target.detach().clone().cpu())
 
@@ -161,22 +201,26 @@ def wvlwise_test(opt, model, dataset, device, file_name):
                 'mae_val_dict' : mae_dict,
                 'mse_val_dict' : mse_dict,
                 'nmae_val_dict' : nmae_dict,
-                'nmse_val_dict' : nmae_dict,
+                'nmse_val_dict' : nmse_dict,
                 'structure_mae_val_dict' : structure_mae_dict,
                 'structure_mse_val_dict' : structure_mse_dict,
                 'structure_nmae_val_dict' : structure_nmae_dict,
-                'structure_nmse_val_dict' : structure_nmae_dict,
+                'structure_nmse_val_dict' : structure_nmse_dict,
+                'near_mae_val_dict' : near_mae_dict,
+                'near_mse_val_dict' : near_mse_dict,
+                'near_nmae_val_dict' : near_nmae_dict,
+                'near_nmse_val_dict' : near_nmse_dict,
                 'fields_dict' : fields_dict,
             }, os.path.join(save_folder, file_name+".pt")
         )
 
 
 
-def main():
+def main(model='wino'):
     parent_path = Path(__file__).parent.parent.resolve()
     
-    opt = test_yaml_to_args(parent_path=parent_path, model='wino')
-    opt.model = 'wino'
+    opt = test_yaml_to_args(parent_path=parent_path, model=model)
+    opt.model = model
 
     
     if torch.cuda.is_available() and len(opt.device) == 1:
@@ -187,8 +231,8 @@ def main():
         device = torch.device("cpu")
         torch.backends.cudnn.benchmark = False
 
-    # if int(opt.deterministic) == True:
-    #     set_torch_deterministic(int(opt.random_state))
+    if int(opt.deterministic) == True:
+        set_torch_deterministic(int(opt.random_state))
         
     model = build_model(opt, opt.model, device)    
 
@@ -209,5 +253,6 @@ def main():
     
     
 if __name__ == '__main__':
-    main()
-    
+    for config_name in ["wino", "fno2d", "fno2dfactor", "neurolight", "unet"]:
+        main(model=config_name)
+        torch.cuda.empty_cache()

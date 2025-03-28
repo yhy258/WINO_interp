@@ -49,6 +49,16 @@ def get_design_range(resolution, width=0.275):
     return design_range
 
 
+def get_near_field(data, design_range, resolution):
+    # data : B, C, H, W
+    start = design_range[1]
+    mid_wavelength = 1 # max wavelength - 0.7 : 1µm near field.
+    unit_micro = resolution
+    distance = int(unit_micro * mid_wavelength)
+    param_output = data[:, :, start: start + distance, :] 
+    return param_output
+
+
 
 # 272, 206
 def add_config_to_parser(parser, config):
@@ -101,7 +111,6 @@ def train(
             data, ex, ey, target, dl, wavelength, _ = datas
         else:
             data, target, dl, wavelength = datas
-            
         n = data.shape[0]
         data = data.type(torch.float32)
         wavelength = wavelength[:, None].type(torch.float32)
@@ -134,8 +143,6 @@ def train(
     
     scheduler.step()
 
-
-
     return mse_meter.avg
     
     
@@ -161,6 +168,11 @@ def validate(
     structure_mse_meter = AverageMeter("mse")
     structure_nmae_meter = AverageMeter("mse")
     structure_nmse_meter = AverageMeter("mse")
+    near_mae_meter = AverageMeter("mse")
+    near_mse_meter = AverageMeter("mse")
+    near_nmae_meter = AverageMeter("mse")
+    near_nmse_meter = AverageMeter("mse")
+    
     pred_images = []
     target_images = []
     structure_residue_images = []
@@ -171,6 +183,7 @@ def validate(
             else:
                 data, target, dl, wavelength = datas
             data = data.type(torch.float32)
+            
             # print(wavelength)
             wavelength = wavelength[:, None].type(torch.float32)
             
@@ -207,6 +220,9 @@ def validate(
             param_output = output[:, :, d_range[0]:d_range[1], :]
             param_target = target[:, :, d_range[0]:d_range[1], :]
             
+            near_output = get_near_field(output, d_range, 40)
+            near_target = get_near_field(target, d_range, 40)
+            
             structure_residue_images.append(
                 wandb.Image(
                     torch.abs(param_output[0,0] - param_target[0,0]), caption="Wavelength : {}".format(wavelength[0])
@@ -218,14 +234,25 @@ def validate(
             structure_nmae_val_loss = nmae_criterion(param_output, param_target)
             structure_nmse_val_loss = nmse_criterion(param_output, param_target)
             
+            
+            near_mae_val_loss = mae_criterion(near_output, near_target)
+            near_mse_val_loss = mse_criterion(near_output, near_target)
+            near_nmae_val_loss = nmae_criterion(near_output, near_target)
+            near_nmse_val_loss = nmse_criterion(near_output, near_target)
+            
             structure_mae_meter.update(structure_mae_val_loss.item())
             structure_mse_meter.update(structure_mse_val_loss.item())
             structure_nmae_meter.update(structure_nmae_val_loss.item())
             structure_nmse_meter.update(structure_nmse_val_loss.item())
             
+            near_mae_meter.update(near_mae_val_loss.item())
+            near_mse_meter.update(near_mse_val_loss.item())
+            near_nmae_meter.update(near_nmae_val_loss.item())
+            near_nmse_meter.update(near_nmse_val_loss.item())
+            
     return mae_meter.avg, mse_meter.avg, nmae_meter.avg, nmse_meter.avg, \
         structure_mae_meter.avg, structure_mse_meter.avg, structure_nmae_meter.avg, structure_nmse_meter.avg, \
-            pred_images, target_images, structure_residue_images
+            near_mae_meter.avg, near_mse_meter.avg,  near_nmae_meter.avg, near_nmse_meter.avg, pred_images, target_images, structure_residue_images
 
 
 
@@ -250,9 +277,10 @@ def main(model='wino'):
     
     # TRAIN
     # Utils initialization.
-    project_name= "WAVE INTERPOLATION TRAINING PHASE"
+    project_name= "WAVE INTERPOLATION Recovery"
     wandb.init(
-        project = project_name
+        project = project_name,
+        name=model,
     )
     wandb.config.update(opt)
 
@@ -272,7 +300,7 @@ def main(model='wino'):
         
     # BUILD DATALOADER
     print("BUILD DATALOADER")
-    train_loader = build_dataloader(opt, 'train')
+    train_loader = build_dataloader(opt, 'train') ### train_data_num=10000 you can input parameter.
     valid_loader = build_dataloader(opt, 'valid')
     train_wvl_valid_loader = build_dataloader(opt, 'train_wvl_valid')
    
@@ -315,6 +343,11 @@ def main(model='wino'):
     train_wvl_nmse_valid_losses = []
     train_wvl_mae_valid_losses = []
     train_wvl_mse_valid_losses = []
+    train_wvl_nmae_near_valid_losses = []
+    train_wvl_nmse_near_valid_losses = []
+    train_wvl_mae_near_valid_losses = []
+    train_wvl_mse_near_valid_losses = []
+    
     nmae_valid_losses = []
     nmse_valid_losses = []
     mae_valid_losses = []
@@ -323,6 +356,11 @@ def main(model='wino'):
     param_nmse_valid_losses = []
     param_mse_valid_losses = []
     param_mae_valid_losses = []
+    
+    near_nmae_valid_losses = []
+    near_nmse_valid_losses = []
+    near_mse_valid_losses = []
+    near_mae_valid_losses = []
     
     epoch = 0
     train_avg = 1.0
@@ -350,6 +388,7 @@ def main(model='wino'):
         # Validation for unseen wavelengths during training.
         mae_valid_avg, mse_valid_avg, nmae_valid_avg, nmse_valid_avg,\
             mae_param_valid_avg, mse_param_valid_avg, nmae_param_valid_avg, nmse_param_valid_avg,\
+            mae_near_valid_avg, mse_near_valid_avg, nmae_near_valid_avg, nmse_near_valid_avg,\
                 pred_images, target_images, structure_residue_image = validate(
             opt=opt,
             model=model,
@@ -365,6 +404,7 @@ def main(model='wino'):
         # Validation for seen wavelengths during training.
         train_wvl_mae_valid_avg, train_wvl_mse_valid_avg, train_wvl_nmae_valid_avg, train_wvl_nmse_valid_avg,\
             train_wvl_mae_param_valid_avg, train_wvl_mse_param_valid_avg, train_wvl_nmae_param_valid_avg, train_wvl_nmse_param_valid_avg, \
+                train_wvl_mae_near_valid_avg, train_wvl_mse_near_valid_avg, train_wvl_nmae_near_valid_avg, train_wvl_nmse_near_valid_avg,\
                 train_wvl_pred_images, train_wvl_target_images, train_wvl_structure_residue_image = validate(
             opt=opt,
             model=model,
@@ -386,6 +426,10 @@ def main(model='wino'):
             'mse_param_valid_loss' : mse_param_valid_avg,
             'nmae_param_valid_loss' : nmae_param_valid_avg,
             'nmse_param_valid_loss' : nmse_param_valid_avg,
+            'mae_near_valid_loss' : mae_near_valid_avg,
+            'mse_near_valid_loss' : mse_near_valid_avg,
+            'nmae_near_valid_loss' : nmae_near_valid_avg,
+            'nmse_near_valid_loss' : nmse_near_valid_avg,
             'pred_images' : pred_images,
             'target_images' : target_images,
             'param_residue_image' : structure_residue_image,
@@ -397,6 +441,10 @@ def main(model='wino'):
             'train_wvl_mse_param_valid_loss' : train_wvl_mse_param_valid_avg,
             'train_wvl_nmae_param_valid_loss' : train_wvl_nmae_param_valid_avg,
             'train_wvl_nmse_param_valid_loss' : train_wvl_nmse_param_valid_avg,
+            'train_wvl_mae_near_valid_loss' : train_wvl_mae_near_valid_avg,
+            'train_wvl_mse_near_valid_loss' : train_wvl_mse_near_valid_avg,
+            'train_wvl_nmae_near_valid_loss' : train_wvl_nmae_near_valid_avg,
+            'train_wvl_nmse_near_valid_loss' : train_wvl_nmse_near_valid_avg,
             'train_wvl_pred_images' : train_wvl_pred_images,
             'train_wvl_target_images' : train_wvl_target_images,
             'train_wvl_param_residue_images' : train_wvl_structure_residue_image,
@@ -419,6 +467,11 @@ def main(model='wino'):
         train_wvl_nmse_param_valid_losses.append(train_wvl_nmse_param_valid_avg)
         train_wvl_mae_param_valid_losses.append(train_wvl_mae_param_valid_avg)
         train_wvl_mse_param_valid_losses.append(train_wvl_mse_param_valid_avg)
+        train_wvl_nmae_near_valid_losses.append(train_wvl_nmae_near_valid_avg)
+        train_wvl_nmse_near_valid_losses.append(train_wvl_nmse_near_valid_avg)
+        train_wvl_mae_near_valid_losses.append(train_wvl_mae_near_valid_avg)
+        train_wvl_mse_near_valid_losses.append(train_wvl_mse_near_valid_avg)
+        
         mse_valid_losses.append(mse_valid_avg)
         nmae_valid_losses.append(nmae_valid_avg)
         nmse_valid_losses.append(nmse_valid_avg)
@@ -428,6 +481,13 @@ def main(model='wino'):
         param_nmse_valid_losses.append(nmse_param_valid_avg)
         param_mse_valid_losses.append(mse_param_valid_avg)
         param_mae_valid_losses.append(mae_param_valid_avg)
+        near_nmae_valid_losses.append(nmae_near_valid_avg)
+        near_nmse_valid_losses.append(nmse_near_valid_avg)
+        near_mae_valid_losses.append(mae_near_valid_avg)
+        near_mse_valid_losses.append(mse_near_valid_avg)
+        
+        
+        
         if epoch == opt.n_epochs:
             loss_dict = {'train_loss' : train_losses, 
                             'train_wvl_nmae_valid_loss' : train_wvl_nmae_valid_losses,
@@ -438,6 +498,10 @@ def main(model='wino'):
                             'train_wvl_param_nmse_valid_loss' : train_wvl_nmse_param_valid_losses,
                             'train_wvl_param_mae_valid_loss': train_wvl_mae_param_valid_losses,
                             'train_wvl_param_mse_valid_loss': train_wvl_mse_param_valid_losses,
+                            'train_wvl_near_nmae_valid_loss' : train_wvl_nmae_near_valid_losses,
+                            'train_wvl_near_nmse_valid_loss' : train_wvl_nmse_near_valid_losses,
+                            'train_wvl_near_mae_valid_loss': train_wvl_mae_near_valid_losses,
+                            'train_wvl_near_mse_valid_loss': train_wvl_mse_near_valid_losses,
                             'nmae_valid_loss' : nmae_valid_losses,
                             'nmse_valid_loss' : nmse_valid_losses,
                             'mae_valid_loss' : mae_valid_losses,
@@ -445,7 +509,12 @@ def main(model='wino'):
                             'param_nmae_valid_loss' : param_nmae_valid_losses,
                             'param_nmse_valid_loss' : param_nmse_valid_losses,
                             'param_mae_valid_loss': param_mae_valid_losses,
-                            'param_mse_valid_loss': param_mse_valid_losses}
+                            'param_mse_valid_loss': param_mse_valid_losses,
+                            'near_nmae_valid_loss' : near_nmae_valid_losses,
+                            'near_nmse_valid_loss' : near_nmse_valid_losses,
+                            'near_mae_valid_loss': near_mae_valid_losses,
+                            'near_mse_valid_loss': near_mse_valid_losses
+                            }
             saver(valid_avg, model, optimizer, scheduler, epoch, loss_dict, model_save_path)
         else:
             loss_dict = None
@@ -455,4 +524,6 @@ def main(model='wino'):
     
     
 if __name__ == "__main__":
-    main(model="wino")
+    main(model="fno2dfactor")
+    
+    

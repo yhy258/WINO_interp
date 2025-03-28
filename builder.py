@@ -20,7 +20,7 @@ from dataset.interpolative_dataset import FullSimDataset
 from torch.utils.data import DataLoader
 from CevicheSim.simulation import *
 
-def build_dataloader(opt, mode):
+def build_dataloader(opt, mode, train_data_num=12000):
     if opt.mode == "train":
         shuffle = True
     else:
@@ -28,7 +28,7 @@ def build_dataloader(opt, mode):
     dataset_root = os.path.join(opt.dataset_root, f'ceviche_train')
     valid_dataset_root = os.path.join(opt.dataset_root, f'ceviche_valid')
 
-    dataset = FullSimDataset(dataset_root, valid_dataset_root, opt.dataset_folder_name, mode=mode, normalize=opt.normalize, step=opt.step)
+    dataset = FullSimDataset(dataset_root, valid_dataset_root, opt.dataset_folder_name, mode=mode, train_data_num=train_data_num, normalize=opt.normalize, step=opt.step)
 
     dataloader = DataLoader(dataset=dataset, batch_size=opt.batch_size, shuffle=shuffle, num_workers=opt.num_workers, pin_memory=opt.pin_memory)
     return dataloader

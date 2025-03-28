@@ -60,9 +60,9 @@ class ConditionalCevicheProcess():
     field_scale_factor = 2.5e13
     PML_pixel = 40
     resolution = 40
-    def __init__(self, path, interp_path, data_num=8000, without_PML=True, step=20):
+    def __init__(self, path, interp_path, train_data_num=12000, without_PML=True, step=20):
         self.path = path
-        self.data_num = data_num
+        self.train_data_num = train_data_num
         self.without_PML = without_PML
         self.min_wvl, self.max_wvl = 400, 700
         self.min_eps, self.max_eps = 1, 1.46**2
@@ -78,7 +78,7 @@ class ConditionalCevicheProcess():
         epss, ezs, dls, wvls = [], [], [], []
         
         this_path = path
-        this_epss, this_ezs, this_dls, this_wvls = self.get_datas(path=this_path,mode='train')
+        this_epss, this_ezs, this_dls, this_wvls = self.get_datas(path=this_path,mode='train',train_data_num=train_data_num)
         epss.append(this_epss)
         ezs.append(this_ezs)
         dls.append(this_dls)
@@ -141,7 +141,7 @@ class ConditionalCevicheProcess():
         # split
         # save function
     
-    def split_dataset(self, split=(0.8, 0.2)):
+    def split_dataset(self):
 
         train_set = (self.epss, self.ezs, self.dls, self.wvls, self.data_range_dict)
         
@@ -150,13 +150,12 @@ class ConditionalCevicheProcess():
 
         return train_set, test_wvl_set, train_wvl_set
         
-    def save(self, save_path, split=(0.8, 0.2)):
-        N = self.epss.shape[0]
-        train_num = int(N*split[0])
-        test_num = int(N*split[1])
-        print(train_num, self.data_num)
-
-        train_name = f"train.pt"
+    def save(self, save_path):
+        
+        if self.train_data_num==12000:
+            train_name = f"train.pt"
+        else:
+            train_name = f"train{self.train_data_num}.pt"
         valid_name = f"valid.pt"
         t_wvl_valid_name = f"train_wvl_valid.pt"   
         
@@ -164,7 +163,7 @@ class ConditionalCevicheProcess():
         valid_path = os.path.join(save_path, valid_name)
         t_wvl_valid_path = os.path.join(save_path, t_wvl_valid_name)
         
-        trainset, testset, train_wvl_testset = self.split_dataset(split)
+        trainset, testset, train_wvl_testset = self.split_dataset()
         
         with open(train_path, 'wb') as f:
             torch.save(trainset, f)
@@ -181,11 +180,16 @@ class ConditionalCevicheProcess():
         wvls = torch.tensor(wvls)
         return epss, ezs, dls, wvls
     
-    def get_datas(self, path, mode='train'):
+    def get_datas(self, path, mode='train', train_data_num=12000):
         files = natsort.natsorted(os.listdir(path))
         n = int(len(files))
+        print(f"ENTIRE {mode} dataset num : ", n)
+        
         if mode != 'train':
             files = files
+        if mode=='train':
+            files = files[:train_data_num]
+            print(f"SELECTED {mode} dataset num : ", train_data_num)
         epss = []
         ezs = []
         dls = []
@@ -211,7 +215,7 @@ class ConditionalCevicheProcess():
                 # print(os.path.join(self.path,f))
                 nums += 1
                 
-        print(nums)
+        print("EXCEPTNUM",nums)
         epss = np.stack(epss)
         ezs = np.stack(ezs)
         dls = np.stack(dls)
@@ -227,19 +231,19 @@ class ConditionalCevicheProcess():
 
 
 class FullSimDataset(Dataset):
-    def __init__(self, path='', test_path="", save_folder_name='rand_wvl_data', mode='train', normalize=False, step=5):
-        split = (0.8, 0.2)
+    def __init__(self, path='', test_path="", save_folder_name='rand_wvl_data', mode='train', train_data_num=12000, normalize=False, step=5):
         data_path = os.path.join(path, 'rand_wvl_data') # rand_wvl_data - prefix of simulation datas
         files = os.listdir(data_path)
         N = len(files)
-        train_num = int(N*split[0])
 
         train_name = 'train.pt'
+        if train_data_num != 12000:
+            train_name = f'train{train_data_num}.pt'
         file_path = os.path.join(path, save_folder_name, train_name)
 
         if not os.path.exists(file_path):
             # when we conduct an EM simulation, we bring simulation observations except PML layers. -> without_PML should be "off".
-            proc = ConditionalCevicheProcess(os.path.join(path, 'rand_wvl_data'), interp_path=os.path.join(test_path, 'rand_wvl_data'), data_num=8000, without_PML=False, step=step)
+            proc = ConditionalCevicheProcess(os.path.join(path, 'rand_wvl_data'), interp_path=os.path.join(test_path, 'rand_wvl_data'), train_data_num=train_data_num, without_PML=False, step=step)
     
             os.makedirs(os.path.join(path,save_folder_name), exist_ok=True)
             proc.save(os.path.join(path,save_folder_name))
@@ -282,6 +286,3 @@ class FullSimDataset(Dataset):
         # epss, exs, eys, hzs, wvls normalization
         # real valued. N, C, H, W
         return self.epss[index], self.ezs[index], self.dls[index], self.wvls[index]
-
-
-
