@@ -268,6 +268,8 @@ def main(model='wino'):
 
     opt.data = 'full_meep'
     opt = init_attr(opt, 'cond', False)
+    opt = init_attr(opt, 'eps_min', 1.)
+    opt = init_attr(opt, 'eps_max', 1.46**2)
 
     print("Cond mode : ", opt.cond)
     
