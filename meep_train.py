@@ -270,6 +270,7 @@ def main(model='wino'):
     opt = init_attr(opt, 'cond', False)
     opt = init_attr(opt, 'eps_min', 1.)
     opt = init_attr(opt, 'eps_max', 1.46**2)
+    opt = init_attr(opt, 'field_scale_factor', 2.5e13)
 
     print("Cond mode : ", opt.cond)
     

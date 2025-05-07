@@ -57,15 +57,15 @@ def count_data_nums(path):
 
 
 class ConditionalCevicheProcess():
-    field_scale_factor = 2.5e13
     PML_pixel = 40
     resolution = 40
-    def __init__(self, path, interp_path, train_data_num=12000, without_PML=True, step=20, eps_min=1., eps_max=1.46**2):
+    def __init__(self, opt, path, interp_path, train_data_num=12000, without_PML=True, step=20):
         self.path = path
         self.train_data_num = train_data_num
         self.without_PML = without_PML
         self.min_wvl, self.max_wvl = 400, 700
-        self.min_eps, self.max_eps = eps_min, eps_max
+        self.min_eps, self.max_eps = opt.eps_min, opt.eps_max
+        self.field_scale_factor = opt.field_scale_factor
 
         # trainset : load : given cond_interval
         # testset : load : all condition
@@ -243,7 +243,7 @@ class FullSimDataset(Dataset):
 
         if not os.path.exists(file_path):
             # when we conduct an EM simulation, we bring simulation observations except PML layers. -> without_PML should be "off".
-            proc = ConditionalCevicheProcess(os.path.join(path, 'rand_wvl_data'), interp_path=os.path.join(test_path, 'rand_wvl_data'), train_data_num=train_data_num, without_PML=False, step=step, eps_min=opt.eps_min, eps_max=opt.eps_max)
+            proc = ConditionalCevicheProcess(opt, os.path.join(path, 'rand_wvl_data'), interp_path=os.path.join(test_path, 'rand_wvl_data'), train_data_num=train_data_num, without_PML=False, step=step)
     
             os.makedirs(os.path.join(path,save_folder_name), exist_ok=True)
             proc.save(os.path.join(path,save_folder_name))
