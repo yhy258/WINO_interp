@@ -14,8 +14,8 @@ import os
 from core.models import *
 # from core.cond_models import *
 from core.losses import *
-from pyutils.optimizer.sam import SAM
-from pyutils.lr_scheduler.warmup_cosine_restart import CosineAnnealingWarmupRestarts
+# from pyutils.optimizer.sam import SAM
+# from pyutils.lr_scheduler.warmup_cosine_restart import CosineAnnealingWarmupRestarts
 from dataset.interpolative_dataset import FullSimDataset
 from torch.utils.data import DataLoader
 from CevicheSim.simulation import *
@@ -206,27 +206,6 @@ def build_optimizer(params, name: str = None, opt=None):
             lr=opt.optimizer_lr,
             weight_decay=opt.optimizer_weight_decay,
         )
-    elif name == "sam_sgd":
-        base_optimizer = torch.optim.SGD
-        optimizer = SAM(
-            params,
-            base_optimizer=base_optimizer,
-            rho=getattr(opt, "rho", 0.5),
-            adaptive=getattr(opt, "adaptive", True),
-            lr=opt.optimizer_lr,
-            weight_decay=opt.optimizer_weight_decay,
-            momenum=0.9,
-        )
-    elif name == "sam_adam":
-        base_optimizer = torch.optim.Adam
-        optimizer = SAM(
-            params,
-            base_optimizer=base_optimizer,
-            rho=getattr(opt, "rho", 0.001),
-            adaptive=getattr(opt, "adaptive", True),
-            lr=opt.optimizer_lr,
-            weight_decay=opt.optimizer_weight_decay,
-        )
     else:
         raise NotImplementedError(name)
 
@@ -241,14 +220,14 @@ def build_scheduler(optimizer, name: str = None, opt=None):
         scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
             optimizer, T_max=int(opt.n_epochs), eta_min=float(opt.scheduler_lr_min)
         )
-    elif name == "cosine_warmup":
-        scheduler = CosineAnnealingWarmupRestarts(
-            optimizer,
-            first_cycle_steps=opt.n_epochs,
-            max_lr=opt.optimizer_lr,
-            min_lr=opt.scheduler_lr_min,
-            warmup_steps=int(opt.scheduler_warmup_steps),
-        )
+    # elif name == "cosine_warmup":
+    #     scheduler = CosineAnnealingWarmupRestarts(
+    #         optimizer,
+    #         first_cycle_steps=opt.n_epochs,
+    #         max_lr=opt.optimizer_lr,
+    #         min_lr=opt.scheduler_lr_min,
+    #         warmup_steps=int(opt.scheduler_warmup_steps),
+    #     )
     elif name == "exp":
         scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=opt.scheduler_lr_gamma)
     else:

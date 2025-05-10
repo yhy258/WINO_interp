@@ -7,14 +7,14 @@
 
 import numpy as np
 from typing import List, Optional, Tuple
-from pyutils.torch_train import set_torch_deterministic
+# from pyutils.torch_train import set_torch_deterministic
 import torch
 from torch import nn
 import torch.nn.functional as F
 from torch.functional import Tensor
 from torch.types import Device
 from .layers.fno_conv2d import FNOConv2d
-from pyutils.activation import Swish
+# from pyutils.activation import Swish
 from timm.models.layers import DropPath, to_2tuple
 
 __all__ = ["OrigUNet", "OrigUNet_SFT"]
@@ -143,9 +143,9 @@ class OrigUNet(nn.Module):
     def reset_parameters(self, random_state: Optional[int] = None):
         for name, m in self.named_modules():
             if isinstance(m, self._conv):
-                if random_state is not None:
-                    # deterministic seed, but different for different layer, and controllable by random_state
-                    set_torch_deterministic(random_state + sum(map(ord, name)))
+                # if random_state is not None:
+                #     # deterministic seed, but different for different layer, and controllable by random_state
+                #     set_torch_deterministic(random_state + sum(map(ord, name)))
                 m.reset_parameters()
     
     def build_layers(self):
@@ -374,9 +374,9 @@ class OrigUNet_SFT(nn.Module):
     def reset_parameters(self, random_state: Optional[int] = None):
         for name, m in self.named_modules():
             if isinstance(m, self._conv):
-                if random_state is not None:
-                    # deterministic seed, but different for different layer, and controllable by random_state
-                    set_torch_deterministic(random_state + sum(map(ord, name)))
+                # if random_state is not None:
+                #     # deterministic seed, but different for different layer, and controllable by random_state
+                #     set_torch_deterministic(random_state + sum(map(ord, name)))
                 m.reset_parameters()
     
     def build_layers(self):

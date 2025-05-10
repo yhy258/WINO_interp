@@ -529,4 +529,4 @@ def main(model='wino'):
 if __name__ == "__main__":
     main(model="fno2dfactor")
     
-    
+# %%

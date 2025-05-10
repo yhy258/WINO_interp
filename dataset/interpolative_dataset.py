@@ -66,6 +66,7 @@ class ConditionalCevicheProcess():
         self.min_wvl, self.max_wvl = 400, 700
         self.min_eps, self.max_eps = opt.eps_min, opt.eps_max
         self.field_scale_factor = opt.field_scale_factor
+        print(f"in this task, the field_scale_factor : {self.field_scale_factor}")
 
         # trainset : load : given cond_interval
         # testset : load : all condition

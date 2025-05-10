@@ -39,7 +39,6 @@ class ModelSaver():
         self.min_avg = math.inf
         self.opt = opt
         self.best = best
-        os.makedirs(opt.save_root, exist_ok=True)
     
     def __call__(self, avg, model, optimizer, scheduler, epoch, loss_dict, log_dir):
         if avg < self.min_avg:

@@ -11,13 +11,13 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from pyutils.activation import Swish
+# from pyutils.activation import nn.SiLU
 from torch import nn
 from timm.models.layers import DropPath, to_2tuple
 from torch.functional import Tensor
 from torch.types import Device, _size
 from torch.utils.checkpoint import checkpoint
-from pyutils.torch_train import set_torch_deterministic
+# from pyutils.torch_train import set_torch_deterministic
 from .layers.factorfno_conv2d import FactorFNOConv2d
 from .layers.fno_conv2d import FNOConv2d
 
@@ -162,7 +162,7 @@ class ConvBlock(nn.Module):
         if act_func is None:
             self.act_func = None
         elif act_func.lower() == "swish":
-            self.act_func = Swish()
+            self.act_func = nn.SiLU()
         else:
             self.act_func = getattr(nn, act_func)()
 
@@ -427,9 +427,9 @@ class FactorFNO2d(nn.Module):
     def reset_parameters(self, random_state: Optional[int] = None):
         for name, m in self.named_modules():
             if isinstance(m, self._conv):
-                if random_state is not None:
-                    # deterministic seed, but different for different layer, and controllable by random_state
-                    set_torch_deterministic(random_state + sum(map(ord, name)))
+                # if random_state is not None:
+                #     # deterministic seed, but different for different layer, and controllable by random_state
+                #     set_torch_deterministic(random_state + sum(map(ord, name)))
                 m.reset_parameters()
                 
     def build_layers(self):
@@ -437,7 +437,7 @@ class FactorFNO2d(nn.Module):
         if self.act_func is None:
             act = None
         elif self.act_func.lower() == "swish":
-            act = Swish()
+            act = nn.SiLU()
         else:
             act = getattr(nn, self.act_func)()
             

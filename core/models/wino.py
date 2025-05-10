@@ -4,12 +4,11 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from pyutils.activation import Swish
 from timm.models.layers import DropPath, to_2tuple
 from torch import nn
 from torch.functional import Tensor
 from torch.types import Device
-from pyutils.torch_train import set_torch_deterministic
+# from pyutils.torch_train import set_torch_deterministic
 
 
 
@@ -39,7 +38,7 @@ def fourier_embedding(timesteps: torch.Tensor, dim, max_period=10000):
 
 def get_act(act='ReLU'): # Default : ReLU()
     
-    if act.lower() == "swish":
+    if act.lower() == "nn.SiLU":
         return nn.SiLU()
     else:
         return getattr(nn, act)()
@@ -118,8 +117,8 @@ class ConvBlock(nn.Module):
         self.conv = nn.Conv2d(in_channels, out_channels, kernel_size, padding=padding)
         if act_func is None:
             self.act_func = None
-        elif act_func.lower() == "swish":
-            self.act_func = Swish()
+        elif act_func.lower() == "nn.SiLU":
+            self.act_func = nn.SiLU()
         else:
             self.act_func = getattr(nn, act_func)()
 
@@ -145,8 +144,8 @@ class FourierBlock(nn.Module):
 
         if act_func is None:
             self.act_func = None
-        elif act_func.lower() == "swish":
-            self.act_func = Swish()
+        elif act_func.lower() == "nn.SiLU":
+            self.act_func = nn.SiLU()
         else:
             self.act_func = getattr(nn, act_func)()
         self.comp_act_func = ComplexAct(self.act_func)
@@ -312,8 +311,8 @@ class ChannelProcessBlock(nn.Module):
             self.act_func = None
         elif ffn_simplegate:
             self.act_func = SimpleGate()
-        elif act_func.lower() == "swish":
-            self.act_func = Swish()
+        elif act_func.lower() == "nn.SiLU":
+            self.act_func = nn.SiLU()
         else:
             self.act_func = getattr(nn, act_func)()
     
@@ -461,7 +460,7 @@ class WINO(nn.Module):
         self.padding = padding
         self.inner_expand = inner_expand
         self.expand_list = expand_list
-        self.hid_num_blocks = hid_num_blocks
+        self.hid_num_blocks = hid_num_blocks if isinstance(hid_num_blocks, list) else list(hid_num_blocks)
         self.modes = modes
         self.sparsity_threshold = sparsity_threshold
         self.hard_thresholding_fraction = hard_thresholding_fraction
@@ -546,8 +545,8 @@ class WINO(nn.Module):
         
         if self.act_func is None:
             act_func = None
-        elif self.act_func.lower() == "swish":
-            act_func = Swish()
+        elif self.act_func.lower() == "nn.SiLU":
+            act_func = nn.SiLU()
         else:
             act_func = getattr(nn, self.act_func)()
 

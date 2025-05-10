@@ -11,7 +11,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.functional import Tensor
-from pyutils.torch_train import set_torch_deterministic
 import numpy as np
 
 
@@ -608,9 +607,6 @@ class CondUNet(nn.Module):
     def reset_parameters(self, random_state: Optional[int] = None):
         for name, m in self.named_modules():
             if isinstance(m, self._conv):
-                if random_state is not None:
-                    # deterministic seed, but different for different layer, and controllable by random_state
-                    set_torch_deterministic(random_state + sum(map(ord, name)))
                 m.reset_parameters()
         
     def adp_pad(self, enc_out, x):

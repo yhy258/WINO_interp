@@ -11,12 +11,12 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from pyutils.activation import Swish
+# from pyutils.activation import nn.SiLU
 from timm.models.layers import DropPath, to_2tuple
 from torch import nn
 from torch.functional import Tensor
 from torch.types import Device
-from pyutils.torch_train import set_torch_deterministic
+# from pyutils.torch_train import set_torch_deterministic
 from .layers.fno_conv2d import FNOConv2d
 
 
@@ -46,7 +46,7 @@ def fourier_embedding(timesteps: torch.Tensor, dim, max_period=10000):
 
 def get_act(act='ReLU'): # Default : ReLU()
     
-    if act.lower() == "swish":
+    if act.lower() == "nn.SiLU":
         return nn.SiLU()
     else:
         return getattr(nn, act)()
@@ -159,8 +159,8 @@ class ConvBlock(nn.Module):
         self.conv = nn.Conv2d(in_channels, out_channels, kernel_size, padding=padding)
         if act_func is None:
             self.act_func = None
-        elif act_func.lower() == "swish":
-            self.act_func = Swish()
+        elif act_func.lower() == "nn.SiLU":
+            self.act_func = nn.SiLU()
         else:
             self.act_func = getattr(nn, act_func)()
 
@@ -300,8 +300,8 @@ class NeurOLight2dBlock(nn.Module):
             self.aug_path = None
         if act_func is None:
             self.act_func = None
-        elif act_func.lower() == "swish":
-            self.act_func = Swish()
+        elif act_func.lower() == "nn.SiLU":
+            self.act_func = nn.SiLU()
         else:
             self.act_func = getattr(nn, act_func)()
 
@@ -397,16 +397,16 @@ class NeurOLight2d(nn.Module):
     def reset_parameters(self, random_state: Optional[int] = None):
         for name, m in self.named_modules():
             if isinstance(m, self._conv):
-                if random_state is not None:
-                    # deterministic seed, but different for different layer, and controllable by random_state
-                    set_torch_deterministic(random_state + sum(map(ord, name)))
+                # if random_state is not None:
+                #     # deterministic seed, but different for different layer, and controllable by random_state
+                #     set_torch_deterministic(random_state + sum(map(ord, name)))
                 m.reset_parameters()
 
     def build_layers(self):
         if self.act_func is None:
             act = None
-        elif self.act_func.lower() == "swish":
-            self.act_func = Swish()
+        elif self.act_func.lower() == "nn.SiLU":
+            self.act_func = nn.SiLU()
         else:
             act = getattr(nn, self.act_func)()
         
