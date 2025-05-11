@@ -115,139 +115,12 @@ def get_data(opt, path):
     return epss, ezs, dls, wvls # 동일 wavlenegths
     
 
-    
-# # def wvlwise_test(opt, model, dataset, device, file_name):
-# #     mae_criterion = nn.L1Loss()
-# #     mse_criterion = nn.MSELoss()
-# #     nmae_criterion = NMAE()
-# #     nmse_criterion = NMSE()
-
-# #     wvls  = list(range(400, 701))
-    
-# #     mae_dict = dict()
-# #     mse_dict = dict()
-# #     nmae_dict = dict()
-# #     nmse_dict = dict()
-# #     structure_mae_dict = dict()
-# #     structure_mse_dict = dict()
-# #     structure_nmae_dict = dict()
-# #     structure_nmse_dict = dict()
-# #     near_mae_dict = dict()
-# #     near_mse_dict = dict()
-# #     near_nmae_dict = dict()
-# #     near_nmse_dict = dict()
-# #     fields_dict = dict()
-    
-    
-# #     d_range = get_design_range(opt.resolution, opt.design_start, opt.width)
-    
-# #     model.eval()
-# #     with torch.no_grad():
-# #         for wvl_num in wvls:
-# #             data, target, dl, wvl = dataset[str(wvl_num)]
-# #             print(data.shape)
-# #             data = data.type(torch.float32)
-# #             # print(wavelength)
-# #             wavelength = wvl[:, None].type(torch.float32)
-            
-# #             dl = torch.cat((dl[:, None], dl[:, None]), dim=1)
-# #             data = data.to(device)
-# #             wavelength = wavelength.to(device)
-# #             dl = dl.to(device)
-# #             target = target.to(device)
-
-            
-# #             output = model(data, wavelength, dl)
-            
-# #             param_output = output[:, :, d_range[0]:d_range[1], :]
-# #             param_target = target[:, :, d_range[0]:d_range[1], :]
-            
-            
-# #             #### use for-loop
-# #             near_outputs = []
-# #             near_targets = []
-# #             for i in range(len(output)):
-# #                 near_output = get_near_field(output[i:i+1], d_range, wavelength[i, 0].item())
-# #                 near_target = get_near_field(target[i:i+1], d_range, wavelength[i, 0].item())
-# #                 near_outputs.append(near_output)
-# #                 near_targets.append(near_target)
-# #             def get_element_error(criterion, outputs, targets):
-# #                 losses = []
-# #                 for output, target in zip(outputs, targets):
-# #                     losses.append(criterion(output, target))
-# #                 return torch.mean(torch.stack(losses))
-                    
-            
-            
-# #             mae_val_loss = mae_criterion(output, target)
-# #             mse_val_loss = mse_criterion(output, target)
-# #             nmae_val_loss = nmae_criterion(output, target)
-# #             nmse_val_loss = nmse_criterion(output, target)
-# #             structure_mae_val_loss = mae_criterion(param_output, param_target)
-# #             structure_mse_val_loss = mse_criterion(param_output, param_target)
-# #             structure_nmae_val_loss = nmae_criterion(param_output, param_target)
-# #             structure_nmse_val_loss = nmse_criterion(param_output, param_target)
-            
-# #             near_mae_val_loss = get_element_error(mae_criterion, near_outputs, near_targets)
-# #             near_mse_val_loss = get_element_error(mse_criterion, near_outputs, near_targets)
-# #             near_nmae_val_loss = get_element_error(nmae_criterion, near_outputs, near_targets)
-# #             near_nmse_val_loss = get_element_error(nmse_criterion, near_outputs, near_targets)
-            
-# #             mae_dict[str(wvl_num)] = mae_val_loss.detach().clone().cpu()
-# #             mse_dict[str(wvl_num)] = mse_val_loss.detach().clone().cpu()
-# #             nmae_dict[str(wvl_num)] = nmae_val_loss.detach().clone().cpu()
-# #             nmse_dict[str(wvl_num)] = nmse_val_loss.detach().clone().cpu()
-# #             structure_mae_dict[str(wvl_num)] = structure_mae_val_loss.detach().clone().cpu()
-# #             structure_mse_dict[str(wvl_num)] = structure_mse_val_loss.detach().clone().cpu()
-# #             structure_nmae_dict[str(wvl_num)] = structure_nmae_val_loss.detach().clone().cpu()
-# #             structure_nmse_dict[str(wvl_num)] = structure_nmse_val_loss.detach().clone().cpu()
-# #             near_mae_dict[str(wvl_num)] = near_mae_val_loss.detach().clone().cpu()
-# #             near_mse_dict[str(wvl_num)] = near_mse_val_loss.detach().clone().cpu()
-# #             near_nmae_dict[str(wvl_num)] = near_nmae_val_loss.detach().clone().cpu()
-# #             near_nmse_dict[str(wvl_num)] = near_nmse_val_loss.detach().clone().cpu()
-            
-# #             fields_dict[str(wvl_num)] = (output.detach().clone().cpu(), target.detach().clone().cpu())
-
-# #         save_folder= f"test_wvlwise_results/{opt.sim_name}/{opt.model}"
-# #         os.makedirs(save_folder, exist_ok=True)
-# #         torch.save(
-# #             {
-# #                 'mae_val_dict' : mae_dict,
-# #                 'mse_val_dict' : mse_dict,
-# #                 'nmae_val_dict' : nmae_dict,
-# #                 'nmse_val_dict' : nmse_dict,
-# #                 'structure_mae_val_dict' : structure_mae_dict,
-# #                 'structure_mse_val_dict' : structure_mse_dict,
-# #                 'structure_nmae_val_dict' : structure_nmae_dict,
-# #                 'structure_nmse_val_dict' : structure_nmse_dict,
-# #                 'near_mae_val_dict' : near_mae_dict,
-# #                 'near_mse_val_dict' : near_mse_dict,
-# #                 'near_nmae_val_dict' : near_nmae_dict,
-# #                 'near_nmse_val_dict' : near_nmse_dict,
-# #                 'fields_dict' : fields_dict,
-# #             }, os.path.join(save_folder, file_name+".pt")
-#         )
-
-
 def retain_batch_wvlwise_test(opt, model, dataset, device, file_name):
-    # mae_criterion = nn.L1Loss('none')
-    # mse_criterion = nn.MSELoss('none')
-    # nmae_criterion = NMAE('none')
     nmse_criterion = NMSE(reduction='none')
 
     wvls  = list(range(400, 701))
-    
-    # mae_dict = dict()
-    # mse_dict = dict()
-    # nmae_dict = dict()
     nmse_dict = dict()
-    # structure_mae_dict = dict()
-    # structure_mse_dict = dict()
-    # structure_nmae_dict = dict()
     structure_nmse_dict = dict()
-    # near_mae_dict = dict()
-    # near_mse_dict = dict()
-    # near_nmae_dict = dict()
     near_nmse_dict = dict()
     fields_dict = dict()
     
@@ -290,53 +163,23 @@ def retain_batch_wvlwise_test(opt, model, dataset, device, file_name):
                     losses.append(criterion(output, target))
                 return torch.stack(losses)
                     
-            
-            
-            # mae_val_loss = mae_criterion(output, target) # B,
-            # mse_val_loss = mse_criterion(output, target)
-            # nmae_val_loss = nmae_criterion(output, target)
             nmse_val_loss = nmse_criterion(output, target)
-            # structure_mae_val_loss = mae_criterion(param_output, param_target)
-            # structure_mse_val_loss = mse_criterion(param_output, param_target)
-            # structure_nmae_val_loss = nmae_criterion(param_output, param_target)
             structure_nmse_val_loss = nmse_criterion(param_output, param_target)
-            
-            # near_mae_val_loss = get_element_error(mae_criterion, near_outputs, near_targets)
-            # near_mse_val_loss = get_element_error(mse_criterion, near_outputs, near_targets)
-            # near_nmae_val_loss = get_element_error(nmae_criterion, near_outputs, near_targets)
             near_nmse_val_loss = get_element_error(nmse_criterion, near_outputs, near_targets)
             
-            # mae_dict[str(wvl_num)] = mae_val_loss.detach().clone().cpu()
-            # mse_dict[str(wvl_num)] = mse_val_loss.detach().clone().cpu()
-            # nmae_dict[str(wvl_num)] = nmae_val_loss.detach().clone().cpu()
             nmse_dict[str(wvl_num)] = nmse_val_loss.detach().clone().cpu()
-            # structure_mae_dict[str(wvl_num)] = structure_mae_val_loss.detach().clone().cpu()
-            # structure_mse_dict[str(wvl_num)] = structure_mse_val_loss.detach().clone().cpu()
-            # structure_nmae_dict[str(wvl_num)] = structure_nmae_val_loss.detach().clone().cpu()
             structure_nmse_dict[str(wvl_num)] = structure_nmse_val_loss.detach().clone().cpu()
-            # near_mae_dict[str(wvl_num)] = near_mae_val_loss.detach().clone().cpu()
-            # near_mse_dict[str(wvl_num)] = near_mse_val_loss.detach().clone().cpu()
-            # near_nmae_dict[str(wvl_num)] = near_nmae_val_loss.detach().clone().cpu()
             near_nmse_dict[str(wvl_num)] = near_nmse_val_loss.detach().clone().cpu()
             
             fields_dict[str(wvl_num)] = (output.detach().clone().cpu(), target.detach().clone().cpu())
 
         os.makedirs('retain_batch_test_wvlwise_results', exist_ok=True)
-        save_folder= f"retain_batch_test_wvlwise_results/{opt.model}"
+        save_folder= f"retain_batch_test_wvlwise_results/{opt.sim_name}/{opt.model}"
         os.makedirs(save_folder, exist_ok=True)
         torch.save(
             {
-                # 'mae_val_dict' : mae_dict,
-                # 'mse_val_dict' : mse_dict,
-                # 'nmae_val_dict' : nmae_dict,
                 'nmse_val_dict' : nmse_dict,
-                # 'structure_mae_val_dict' : structure_mae_dict,
-                # 'structure_mse_val_dict' : structure_mse_dict,
-                # 'structure_nmae_val_dict' : structure_nmae_dict,
                 'structure_nmse_val_dict' : structure_nmse_dict,
-                # 'near_mae_val_dict' : near_mae_dict,
-                # 'near_mse_val_dict' : near_mse_dict,
-                # 'near_nmae_val_dict' : near_nmae_dict,
                 'near_nmse_val_dict' : near_nmse_dict,
                 'fields_dict' : fields_dict,
             }, os.path.join(save_folder, file_name+".pt")
@@ -380,21 +223,18 @@ if __name__== '__main__':
     dataset_root_dict = {}
     
     
-    eps_dict = {'triple_layer':{'eps_min':1.0, 'eps_max': 1.46**2}, 'straight_waveguide':{'eps_min':1.0, 'eps_max':2.25}, 'image_sensor': {'eps_min':1.0, 'eps_max':4.0}}
-    scaling_dict = {'image_sensor': 1.33e13, 'triple_layer': 1.5e13, 'straight_waveguide': 1.25e13}
-    design_range_dict = {'triple_layer': {'design_start':0.4, 'width': 0.12}, 'straight_waveguide': {'design_start':1.0, 'width':4.85 }, 'image_sensor': {'design_start':0.6, 'width': 3.5}}
+    eps_dict = {'single_layer': {'eps_min':1.0, 'eps_max': 1.46**2},'triple_layer':{'eps_min':1.0, 'eps_max': 1.46**2}, 'straight_waveguide':{'eps_min':1.0, 'eps_max':2.25}, 'image_sensor': {'eps_min':1.0, 'eps_max':4.0}}
+    scaling_dict = {'single_layer': 2.5e13,'image_sensor': 1.33e13, 'triple_layer': 1.5e13, 'straight_waveguide': 1.25e13}
+    design_range_dict = {'single_layer': {'design_start':0.4, 'width': 0.12}, 'triple_layer': {'design_start':0.4, 'width': 0.12}, 'straight_waveguide': {'design_start':1.0, 'width':4.85 }, 'image_sensor': {'design_start':0.6, 'width': 3.5}}
     
-    # ckpt ex :  "/data/joon/Results/WINO/unziped_ckpt/image_sensor/checkpoints/wino/nmse_waveprior_64dim_12layer_256_5060_auggroup4_weightsharing/epoch200.pt"
-    # dataset root : '/data/joon/Dataset/WINO/unziped_datasets/double_layer'
     parser = argparse.ArgumentParser(description="wino-ablation-study")
-    parser.add_argument('--sim_name', type=str, default="triple_layer", help='The name of the simulation setting, [triple_layer, straight_waveguide, image_sensor]')
+    parser.add_argument('--sim_name', type=str, default="single_layer", help='The name of the simulation setting, [triple_layer, straight_waveguide, image_sensor]')
     parser.add_argument('--model', type=str, default="wino", help='The name of the model')
+    parser.add_argument('--ckpt_base', type=str, default="checkpoints", help='The path of the model checkpoints')
+    parser.add_argument('--dataset_root', type=str, default="/root/unziped_datasets/single_layer", help='The path of the model checkpoints')
     args = parser.parse_args()
     
-    ckpt_base = '/root/WINO_interp/checkpoints'
-    ckpt_root = os.path.join(ckpt_base, args.sim_name, args.model)
-    config_path = f'/root/WINO_interp/configs'
-    dataset_root = f'/root/unziped_datasets/{args.sim_name}'
+    config_path = f'configs'
     
     
     full_config_path = os.path.join(config_path, args.model+".yaml")
@@ -411,17 +251,9 @@ if __name__== '__main__':
     args.eps_min = data_eps_dict['eps_min']
     args.eps_max = data_eps_dict['eps_max']
     args.field_scale_factor = scaling_dict[args.sim_name]
-    args.dataset_root = dataset_root
+    # args.dataset_root = dataset_root
     args.design_start = design_range_dict[args.sim_name]['design_start']
     args.width = design_range_dict[args.sim_name]['width']
-    
-    ckpt_root = os.path.join(ckpt_root, args.save_root.split(os.path.sep)[-1])
-    
-    if not ckpt_root.startswith('/'):
-        model_path = os.path.join(parent_path, ckpt_root, 'best.pt')
-    else:
-        model_path = os.path.join(ckpt_root, 'best.pt')
-
     
     if torch.cuda.is_available() and len(args.device) == 1:
         device = f"cuda:{args.device[0]}"
@@ -433,7 +265,14 @@ if __name__== '__main__':
 
     if int(args.deterministic) == True:
         set_torch_deterministic(int(args.random_state))
-        
+    
+    ckpt_base = args.ckpt_base
+    ckpt_root = os.path.join(ckpt_base, args.sim_name, args.model)
+    ckpt_root = os.path.join(ckpt_root, args.save_root.split(os.path.sep)[-1])
+    if not ckpt_root.startswith('/'):
+        model_path = os.path.join(parent_path, ckpt_root, 'best.pt')
+    else:
+        model_path = os.path.join(ckpt_root, 'best.pt')
         
     #### Model load.
     model = build_model(args, args.model, device)
@@ -441,12 +280,10 @@ if __name__== '__main__':
     checkpoint = torch.load(model_path, map_location=device)
 
     model.load_state_dict(checkpoint['model'], strict=True)
-
-
-    #### Get test_set
-    dataset_root = f'/root/unziped_datasets/{args.sim_name}/ceviche_test'
-    #### 이건 옮겨서 재설정 필요.
-    data_path = os.path.join(dataset_root, 'rand_wvl_data')
+    # #### Get test_set..
+    # dataset_root = f'/home/joon/SurrogateSolvers/WINO_interp_0820/dataset/data/120nmdata/ceviche_test' if args.sim_name != 'single_layer' else f"/home/joon/SurrogateSolvers/WINO_interp_0820/dataset/data/120nmdata/ceviche_test"
+    # #### 이건 옮겨서 재설정 필요.
+    data_path = os.path.join(dataset_root, 'ceviche_test', 'rand_wvl_data')
     dataset = get_dataset(args, data_path)
     print("DATA OK")
     file_name = args.save_root.split(os.path.sep)[-1]

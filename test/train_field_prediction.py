@@ -113,7 +113,7 @@ def train(
 
 
 
-def main(opt, model='wino', ckpt_root=''):
+def main(opt, model='wino'):
     parent_path = Path(__file__).parent.parent.resolve()
 
     if torch.cuda.is_available() and len(opt.device) == 1:
@@ -129,9 +129,9 @@ def main(opt, model='wino', ckpt_root=''):
         
     model = build_model(opt, opt.model, device)    
     
-    ckpt_root = os.path.join(ckpt_root, opt.save_root.split(os.path.sep)[-1])
-    
-
+    ckpt_base = args.ckpt_base
+    ckpt_root = os.path.join(ckpt_base, args.sim_name, args.model)
+    ckpt_root = os.path.join(ckpt_root, args.save_root.split(os.path.sep)[-1])
     if not ckpt_root.startswith('/'):
         model_path = os.path.join(parent_path, ckpt_root, 'best.pt')
     else:
@@ -161,13 +161,7 @@ def main(opt, model='wino', ckpt_root=''):
     
 if __name__ == '__main__':
     """
-        GOAL : 다양한 data setting에 대해서 모두 수행하고 싶음.
-        
-        시뮬레이션 세팅에 따라 달라지는점. 
-        1. Checkpoint root
-        2. Dataset root
-        3. Design region
-        4. Permittivity
+        GOAL : Only get the train results
     """
     
     dataset_root_dict = {}
@@ -181,12 +175,12 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="wino-ablation-study")
     parser.add_argument('--sim_name', type=str, default="triple_layer", help='The name of the simulation setting, [triple_layer, straight_waveguide, image_sensor]')
     parser.add_argument('--model', type=str, default="wino", help='The name of the model')
+    parser.add_argument('--ckpt_base', type=str, default="checkpoints", help='The path of the model checkpoints')
+    parser.add_argument('--dataset_root', type=str, default="/root/unziped_datasets/single_layer", help='The path of the model checkpoints')
     args = parser.parse_args()
     
-    
-    ckpt_root = os.path.join(ckpt_base, args.sim_name, args.model)
-    config_path = f'/root/WINO_interp/configs'
-    dataset_root = f'/root/unziped_datasets/{args.sim_name}'
+    config_path = f'configs'
+    dataset_root = args.dataset_root
     
     
     full_config_path = os.path.join(config_path, args.model+".yaml")
@@ -207,4 +201,4 @@ if __name__ == '__main__':
     
     
     
-    main(args, model=args.model, ckpt_root=ckpt_root)
+    main(args, model=args.model)

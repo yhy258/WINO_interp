@@ -140,13 +140,12 @@ def data2mag(data):
     mag = torch.abs(data)
     return mag
 
-def get_design_range(resolution, width=0.275):
+def get_design_range(resolution, start=0.4, width=0.275):
     dl = 1e-6/resolution
     NPML = int(1/1e6/dl)
-    subtrate_range = (0, 0 + int(0.4/1e6/dl))
+    subtrate_range = (0, 0 + int(start/1e6/dl))
     design_range = (subtrate_range[1],subtrate_range[1] + int(width/1e6/dl))
     return design_range
-
 
 def get_near_field(data, design_range, resolution):
     # data : B, C, H, W
@@ -315,7 +314,7 @@ def validate(
             nmse_meter.update(nmse_val_loss.item())        
             
             
-            d_range = get_design_range(opt.resolution, opt.width)
+            d_range = get_design_range(opt.resolution, opt.design_start, opt.width)
             param_output = output[:, :, d_range[0]:d_range[1], :]
             param_target = target[:, :, d_range[0]:d_range[1], :]
             
@@ -369,11 +368,14 @@ def main(opt):
     
     date_time = str(datetime.datetime.now())
     date_time = time2file_name(date_time)
-    model_save_path = os.path.join(opt.save_root.split(os.path.sep)[0], opt.sim_name, os.path.sep.join(opt.save_root.split(os.path.sep)[1:]))
+    ckpt_base = args.ckpt_base
+    ckpt_root = os.path.join(ckpt_base, args.sim_name, args.model)
+    model_save_path = os.path.join(ckpt_root, args.save_root.split(os.path.sep)[-1])
+    # model_save_path = os.path.join(opt.save_root.split(os.path.sep)[0], opt.sim_name, os.path.sep.join(opt.save_root.split(os.path.sep)[1:]))
     os.makedirs(model_save_path, exist_ok=True)
     # TRAIN
     # Utils initialization.
-    project_name= "AUTOMaTED WAVE INTERPOLATION"
+    project_name= "AUTOMATED WAVE INTERPOLATION"
     wandb.init(
         project = project_name,
         name=opt.model +" data 12000",
@@ -630,12 +632,16 @@ if __name__ == "__main__":
         4. Permittivity
     """
     
-    eps_dict = {'triple_layer':{'eps_min':1.0, 'eps_max': 1.46**2}, 'straight_waveguide':{'eps_min':1.0, 'eps_max':2.25}, 'image_sensor': {'eps_min':1.0, 'eps_max':4.0}}
-    scaling_dict = {'image_sensor': 1.33e13, 'triple_layer': 1.5e13, 'straight_waveguide': 1.25e13}
+    eps_dict = {'single_layer': {'eps_min':1.0, 'eps_max': 1.46**2},'triple_layer':{'eps_min':1.0, 'eps_max': 1.46**2}, 'straight_waveguide':{'eps_min':1.0, 'eps_max':2.25}, 'image_sensor': {'eps_min':1.0, 'eps_max':4.0}}
+    scaling_dict = {'single_layer': 2.5e13,'image_sensor': 1.33e13, 'triple_layer': 1.5e13, 'straight_waveguide': 1.25e13}
+    design_range_dict = {'single_layer': {'design_start':0.4, 'width': 0.12}, 'triple_layer': {'design_start':0.4, 'width': 0.12}, 'straight_waveguide': {'design_start':1.0, 'width':4.85 }, 'image_sensor': {'design_start':0.6, 'width': 3.5}}
     
     parser = argparse.ArgumentParser(description="wino-ablation-study")
-    parser.add_argument('--sim_name', type=str, default="triple_layer", help='The name of the simulation setting, [triple_layer, straight_waveguide, image_sensor]')
+    parser.add_argument('--sim_name', type=str, default="single_layer", help='The name of the simulation setting, [triple_layer, straight_waveguide, image_sensor]')
     parser.add_argument('--model', type=str, default="wino", help='The name of the model')
+    # args.dataset_root = f'/root/unziped_datasets/{args.sim_name}'
+    parser.add_argument('--dataset_root', type=str, default="/root/unziped_datasets/single_layer", help='The root of the dataset')
+    parser.add_argument('--ckpt_base', type=str, default="checkpoints", help='The root of the dataset')
     args = parser.parse_args()
     
     config_path = f'configs'
@@ -648,17 +654,13 @@ if __name__ == "__main__":
         child_dict = config._get_child(k)
         for ck, cv in child_dict.items():
             args = init_attr(args, ck, cv) # ck가 없으면 cv로 초기화
-            
-            
+    
     data_eps_dict = eps_dict[args.sim_name]
     args.eps_min = data_eps_dict['eps_min']
     args.eps_max = data_eps_dict['eps_max']
+    args.design_start = design_range_dict[args.sim_name]['design_start']
+    args.width = design_range_dict[args.sim_name]['width']
     args.field_scale_factor = scaling_dict[args.sim_name]
-    
-    
-    args.dataset_root = f'/root/unziped_datasets/{args.sim_name}' # 수정필요 (ceviche train 이전 폴더.)
-    
-    
     
     main(args)
     
