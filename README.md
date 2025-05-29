@@ -1,26 +1,18 @@
 
-<h1> Wave Interpolation Neural Operator: Parameter-Efficient Electromagnetic Surrogate Solver for Broadband Field Prediction using Discrete Wavelength Data </h1>
+<h1> Wave Interpolation Neural Operator: Electromagnetic Surrogate Solver for Broadband Field Prediction using Discrete Wavelength Data </h1>
 
 <hr />
 
-> **Abstract:** *Recently, electromagnetic surrogate solvers, trained on solutions of Maxwell’s equations under specific simulation conditions, enabled real-time inference of computationally expensive simulations. However, conventional surrogate solvers often consider only a narrow range of simulation parameters and fail when encountering even slight variations in simulation conditions. To address this limitation, we propose a broadband surrogate solver capable of providing solutions across a continuous range of wavelengths, even when trained on discrete wavelength data. Our approach leverages a Wave-Informed element-wise Multiplicative Encoding and a Fourier Group Convolutional Shuffling operator to mitigate overfitting while capturing the fundamental characteristics of Maxwell’s equations. Compared to the state-of-the-art surrogate solver, our model achieves a 74% reduction in parameters, an 80.5% improvement in prediction accuracy for untrained wavelengths, demonstrating superior generalization and efficiency.* 
+> **Abstract:** *Deep learning based surrogate solvers promise fast electromagnetic simulations yet often fail when asked to predict fields at unseen wavelengths, which is crucial for broadband photonics. We present the principle of spectral consistency, which requires that any change in wavelength causes a predictable shift in spatial frequency, and embed it in a wave-informed, element-wise multiplicative encoding for the Fourier neural operator. Our model, trained only at 20 nm steps from 400 to 700 nm, accurately predicts full-domain electromagnetic fields in metalens, spectrum splitters, and freeform waveguides. The normalized mean squared error at unseen wavelengths decreases by up to 71\% relative to the current best neural solvers. The network uses only 0.43 million parameters, a 74\% reduction, and performs inference 42 times faster. The combination of physical insight and compact architecture yields a reliable surrogate solver for the rapid design of broadband next-generation photonic devices.* 
 <hr />
 </div>
 
 ## Introduction
 
 Conventional neural network based surrogate solvers typically perform well within the fixed simulation settings in which they are trained.
-Generating a new dataset and retraining the model to predict outcomes for new simulation parameters
-are necessary.
+Generating a new dataset and retraining the model to predict outcomes for new simulation parameters are necessary.
 
 To address this issue, we propose a parameter-efficient surrogate solver named Wave Interpolation Neural Operator (WINO). For the first time, WINO enables the interpolation of simulation parameters by training with discrete wavelength simulation data, allowing it to infer across a continuous spectrum of broadband wavelengths.
-
-## Results
-<img src="figures/SupFig.png" width="500"/>
-
-The above figure shows a comparison of WINO with various surrogate solvers in terms of the number of parameters and prediction performance for untrained wavelengths.
-
-Compared to the state-of-the-art model (NeurOLight), we achieve a $74\%$ reduction in parameters and $80.5\%$ improvements in prediction accuracy for untrained wavelengths, and $13.2\%$ improvements for trained wavelengths.
 
 ## Environment
 
@@ -43,7 +35,11 @@ Other libraries listed in requirements.txt
 
 
 ## Data preparation
-WINO dataset used in the experiments can be accessed on [Google Drive](https://drive.google.com/file/d/1Zx8Uu6mPba6uMvwkG0farp-AJ1j93gtt/view?usp=share_link).
+WINO dataset used in the experiments can be accessed on   
+
+Single-layer metalens: [Google Drive](https://drive.google.com/file/d/1Zx8Uu6mPba6uMvwkG0farp-AJ1j93gtt/view?usp=sharing).  
+Multilyaer spectrum splitter: [Google Drive](https://drive.google.com/file/d/10Lj7GIuXQCZB199NqjACuBcq1Mg99Kdw/view?usp=sharing).  
+Freeform waveguide: [Google Drive](https://drive.google.com/file/d/1qps565HT7ioUu2UBkQybejyPU3pSueoY/view?usp=sharing).
 
 The dataset should be placed in the directory defined in the configure file (check the configs directory).
 
@@ -61,7 +57,8 @@ WINO_interp (repository)
 
 
 ### Simulation
-However, you can also directly simulate the FDFD simulator. In this case, the dataset elements will be slightly different.
+However, you can also directly simulate the FDFD simulator. In this case, the dataset elements will be slightly different.  
+This simulation code is for the single-layer metalens setting. We will update the additional simulation codes.  
 
 ```bash
 python CevicheSim/simulation.py
@@ -71,12 +68,10 @@ If you prepare the dataset using this simulation, the dataset will be created au
 
 ## Training
 1. Set the hyperparameter in configure yaml files.
-2. Edit `train.py` code.
-
-    "main(_model_)" : set the model name (yaml file name. examples: neurolight, myfno)
+2. Edit `automated_train.py` code.
 3. Conduct training.
     ```bash
-    python meep_train.py
+    python automated_train.py
     ```
 4. The validation results are logged in WANDB.
 
@@ -88,13 +83,11 @@ If you prepare the dataset using this simulation, the dataset will be created au
 
 ### Checkpoint preparation
 
-The pretrained WINO weights used in the paper can be accessed on [Google Drive](https://drive.google.com/file/d/1q6EYvwEC1bPmFMDf_JSXWOXer3eP41Bv/view?usp=drive_link).
+The pretrained WINO weights used in the paper can be accessed on [Google Drive](https://drive.google.com/drive/folders/1Ma63gEch00QJ-fXQTDoKZeS4u4TchEAm?usp=drive_link).
 
 The checkpoint should be placed in the directory defined in the configure file (check the configs directory).
 
-The default path is "checkpoints/wino/nmse_waveprior_64dim_12layer_256_5060_group8"
-
-
+Example:
 ```
 WINO_interp (repository)
 └───checkpoints
@@ -104,16 +97,10 @@ WINO_interp (repository)
                 └───best.pt
 ```
 ### Evaluation
-1. You can change the model name of the evaluation target in `test/wvlwise_field_prediction.py`.
-
-    ```python
-    opt = test_yaml_to_args(parent_path=parent_path, model='wino')
-    opt.model = 'wino'
-    ```
-2. Conduct evaluation
+1. Conduct evaluation
     ```bash
     cd test # "python" -> can be virtual env python file
     python wvlwise_field_prediction.py
     ```
-3. Then, the result files are generated in test/test_wvlwise_results.
-4. You can manually check the results through `test/test_wvlwise_results/test_field_prediction.ipynb`
+2. Then, the result files are generated in test/test_wvlwise_results.
+3. You can manually check the results through `test/test_wvlwise_results/test_field_prediction.ipynb`
